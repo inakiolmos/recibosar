@@ -13,15 +13,15 @@ interface Ticket {
   tile_id: string | null
 }
 
-function formatARS(amount: number) {
+function ars(n: number) {
   return new Intl.NumberFormat('es-AR', {
     style: 'currency',
     currency: 'ARS',
     minimumFractionDigits: 0,
-  }).format(amount)
+  }).format(n)
 }
 
-function formatDate(iso: string) {
+function fmtDate(iso: string) {
   return new Intl.DateTimeFormat('es-AR', {
     day: '2-digit',
     month: '2-digit',
@@ -45,12 +45,8 @@ export default async function TicketsPage({
 
   const res = await fetch(
     `${API_URL}/api/dashboard/tickets?page=${pageNum}&limit=${limit}`,
-    {
-      headers: { Authorization: `Bearer ${token}` },
-      next: { revalidate: 30 },
-    }
+    { headers: { Authorization: `Bearer ${token}` }, next: { revalidate: 30 } }
   )
-
   if (!res.ok) redirect('/login')
 
   const { tickets, total } = (await res.json()) as {
@@ -59,50 +55,47 @@ export default async function TicketsPage({
     page: number
     limit: number
   }
-
   const totalPages = Math.ceil(total / limit)
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-bold text-gray-900">Tickets</h1>
-        <span className="text-sm text-gray-400">{total} en total</span>
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Tickets</h1>
+          <p className="text-sm text-gray-400 mt-0.5">{total} en total</p>
+        </div>
       </div>
 
-      <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+      <div className="bg-white rounded-3xl shadow-sm overflow-hidden">
         {tickets.length === 0 ? (
-          <div className="py-12 text-center text-gray-400 text-sm">No hay tickets aún.</div>
+          <div className="py-16 text-center text-gray-400 text-sm">
+            Aún no hay tickets. Corré el seed para ver datos demo.
+          </div>
         ) : (
           <>
-            {/* Header tabla — solo desktop */}
-            <div className="hidden sm:grid grid-cols-[1fr_auto_auto_auto] gap-4 px-5 py-3 bg-gray-50 text-xs font-medium text-gray-400 uppercase tracking-wide border-b border-gray-100">
+            <div className="hidden sm:grid grid-cols-[1fr_140px_140px] gap-4 px-6 py-3 border-b border-gray-50 text-xs font-semibold text-gray-400 uppercase tracking-wider">
               <span>Descripción</span>
               <span className="text-right">Monto</span>
               <span className="text-right">Fecha</span>
-              <span />
             </div>
 
             <div className="divide-y divide-gray-50">
               {tickets.map((ticket) => {
-                const firstItem = Array.isArray(ticket.items) ? ticket.items[0] : null
-                const extraItems = Array.isArray(ticket.items) ? ticket.items.length - 1 : 0
+                const first = Array.isArray(ticket.items) ? ticket.items[0] : null
+                const extra = Array.isArray(ticket.items) ? ticket.items.length - 1 : 0
                 return (
-                  <div
-                    key={ticket.id}
-                    className="px-5 py-3 flex items-center justify-between gap-4"
-                  >
+                  <div key={ticket.id} className="px-6 py-4 flex items-center justify-between gap-4 hover:bg-gray-50/50 transition-colors">
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-800 truncate">
-                        {firstItem?.description ?? 'Ticket'}
-                        {extraItems > 0 && (
-                          <span className="text-gray-400 font-normal"> +{extraItems} más</span>
+                      <p className="text-sm font-medium text-gray-900 truncate">
+                        {first?.description ?? 'Ticket'}
+                        {extra > 0 && (
+                          <span className="text-gray-400 font-normal ml-1">+{extra} más</span>
                         )}
                       </p>
-                      <p className="text-xs text-gray-400">{formatDate(ticket.emitted_at)}</p>
+                      <p className="text-xs text-gray-400 mt-0.5 sm:hidden">{fmtDate(ticket.emitted_at)}</p>
                     </div>
-                    <p className="text-sm font-semibold text-gray-800 whitespace-nowrap">
-                      {formatARS(ticket.total)}
-                    </p>
+                    <p className="text-sm font-bold text-gray-900 whitespace-nowrap">{ars(ticket.total)}</p>
+                    <p className="text-xs text-gray-400 whitespace-nowrap hidden sm:block">{fmtDate(ticket.emitted_at)}</p>
                   </div>
                 )
               })}
@@ -111,24 +104,23 @@ export default async function TicketsPage({
         )}
       </div>
 
-      {/* Paginación */}
       {totalPages > 1 && (
-        <div className="flex items-center justify-center gap-2">
+        <div className="flex items-center justify-center gap-3">
           {pageNum > 1 && (
             <Link
               href={`/dashboard/tickets?page=${pageNum - 1}`}
-              className="px-4 py-2 rounded-xl border border-gray-200 text-sm hover:bg-gray-50 transition-colors"
+              className="px-5 py-2.5 rounded-full border border-gray-200 bg-white text-sm font-medium hover:bg-gray-50 transition-colors"
             >
               ← Anterior
             </Link>
           )}
-          <span className="text-sm text-gray-400">
+          <span className="text-sm text-gray-400 px-2">
             {pageNum} / {totalPages}
           </span>
           {pageNum < totalPages && (
             <Link
               href={`/dashboard/tickets?page=${pageNum + 1}`}
-              className="px-4 py-2 rounded-xl border border-gray-200 text-sm hover:bg-gray-50 transition-colors"
+              className="px-5 py-2.5 rounded-full border border-gray-200 bg-white text-sm font-medium hover:bg-gray-50 transition-colors"
             >
               Siguiente →
             </Link>

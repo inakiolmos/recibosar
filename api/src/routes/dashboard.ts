@@ -125,6 +125,42 @@ export async function dashboardRoutes(app: FastifyInstance) {
     return merchant
   })
 
+  // GET /api/dashboard/daily?days=30
+  app.get('/dashboard/daily', async (req, reply) => {
+    const auth = getAuth(req, reply)
+    if (!auth) return
+
+    const { days = '30' } = req.query as { days?: string }
+    const daysNum = Math.min(90, Math.max(1, parseInt(days, 10)))
+
+    const rows = await sql<{ day: string; total: string; count: string }[]>`
+      SELECT
+        DATE(emitted_at AT TIME ZONE 'America/Argentina/Buenos_Aires') AS day,
+        SUM(total)  AS total,
+        COUNT(*)    AS count
+      FROM tickets
+      WHERE merchant_id = ${auth.merchantId}
+        AND emitted_at >= NOW() - (${daysNum} * INTERVAL '1 day')
+      GROUP BY 1
+      ORDER BY 1 ASC
+    `
+
+    const today = new Date()
+    const result = []
+    for (let i = daysNum - 1; i >= 0; i--) {
+      const d = new Date(today)
+      d.setDate(d.getDate() - i)
+      const dayStr = d.toISOString().split('T')[0]
+      const found = rows.find((r) => String(r.day).startsWith(dayStr))
+      result.push({
+        day: dayStr,
+        total: found ? Number(found.total) : 0,
+        count: found ? Number(found.count) : 0,
+      })
+    }
+    return result
+  })
+
   // PUT /api/dashboard/merchant
   app.put('/dashboard/merchant', async (req, reply) => {
     const auth = getAuth(req, reply)
