@@ -48,6 +48,7 @@ export default function CobroPage({ params }: { params: Promise<{ merchantSlug: 
   const [cart, setCart] = useState<CartItem[]>([])
   const [loading, setLoading] = useState(true)
   const [notFound, setNotFound] = useState(false)
+  const [apiError, setApiError] = useState(false)
   const [showPayment, setShowPayment] = useState(false)
   const [isPending, startTransition] = useTransition()
   const [success, setSuccess] = useState(false)
@@ -59,7 +60,9 @@ export default function CobroPage({ params }: { params: Promise<{ merchantSlug: 
   const [selectedAddons, setSelectedAddons] = useState<Addon[]>([])
 
   useEffect(() => {
-    fetch(`${API_URL}/api/pos/${merchantSlug}/products`)
+    const controller = new AbortController()
+    const timeout = setTimeout(() => controller.abort(), 15000)
+    fetch(`${API_URL}/api/pos/${merchantSlug}/products`, { signal: controller.signal })
       .then((r) => { if (!r.ok) { setNotFound(true); return null } return r.json() })
       .then((d) => {
         if (!d) return
@@ -68,7 +71,8 @@ export default function CobroPage({ params }: { params: Promise<{ merchantSlug: 
         const cats = [...new Set<string>(d.products.map((p: Product) => p.category ?? 'General'))]
         setActiveCategory(cats[0] ?? null)
       })
-      .finally(() => setLoading(false))
+      .catch(() => setApiError(true))
+      .finally(() => { clearTimeout(timeout); setLoading(false) })
   }, [merchantSlug])
 
   const categories = [...new Set(products.map((p) => p.category ?? 'General'))]
@@ -159,6 +163,20 @@ export default function CobroPage({ params }: { params: Promise<{ merchantSlug: 
   }
 
   const color = merchant?.brand_color ?? '#111827'
+
+  if (apiError) return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 p-8">
+      <div className="text-center">
+        <p className="text-3xl mb-3">😴</p>
+        <p className="text-gray-700 font-semibold">El servidor está despertando...</p>
+        <p className="text-gray-400 text-sm mt-1 mb-4">Puede tardar hasta 30 segundos la primera vez.</p>
+        <button onClick={() => window.location.reload()}
+          className="bg-gray-900 text-white rounded-full px-5 py-2.5 text-sm font-semibold">
+          Reintentar
+        </button>
+      </div>
+    </div>
+  )
 
   if (loading) return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
