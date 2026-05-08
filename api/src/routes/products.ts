@@ -13,12 +13,17 @@ function getAuth(req: FastifyRequest): { userId: string; merchantId: string } | 
   }
 }
 
+const VariantSchema = z.object({ label: z.string().min(1), price: z.number().positive() })
+const AddonSchema = z.object({ label: z.string().min(1), extra_price: z.number().min(0) })
+
 const ProductSchema = z.object({
   name: z.string().min(1),
   price: z.number().positive(),
   category: z.string().optional().nullable(),
   active: z.boolean().optional(),
   sort_order: z.number().int().optional(),
+  variants: z.array(VariantSchema).optional().default([]),
+  addons: z.array(AddonSchema).optional().default([]),
 })
 
 export async function productRoutes(app: FastifyInstance) {
@@ -29,9 +34,9 @@ export async function productRoutes(app: FastifyInstance) {
 
     const products = await sql<{
       id: string; name: string; price: string; category: string | null;
-      active: boolean; sort_order: number; created_at: string
+      active: boolean; sort_order: number; variants: unknown; addons: unknown; created_at: string
     }[]>`
-      SELECT id, name, price, category, active, sort_order, created_at
+      SELECT id, name, price, category, active, sort_order, variants, addons, created_at
       FROM products
       WHERE merchant_id = ${auth.merchantId}
       ORDER BY sort_order ASC, created_at ASC
@@ -47,10 +52,11 @@ export async function productRoutes(app: FastifyInstance) {
     const body = ProductSchema.safeParse(req.body)
     if (!body.success) return reply.status(400).send({ error: body.error.issues[0]?.message ?? 'Datos inválidos' })
 
-    const { name, price, category = null, active = true, sort_order = 0 } = body.data
+    const { name, price, category = null, active = true, sort_order = 0, variants, addons } = body.data
     const [product] = await sql<{ id: string }[]>`
-      INSERT INTO products (merchant_id, name, price, category, active, sort_order)
-      VALUES (${auth.merchantId}, ${name}, ${price}, ${category}, ${active}, ${sort_order})
+      INSERT INTO products (merchant_id, name, price, category, active, sort_order, variants, addons)
+      VALUES (${auth.merchantId}, ${name}, ${price}, ${category}, ${active}, ${sort_order},
+              ${sql.json(variants as any)}, ${sql.json(addons as any)})
       RETURNING id
     `
     return reply.status(201).send({ id: product.id })
@@ -68,14 +74,16 @@ export async function productRoutes(app: FastifyInstance) {
     const [row] = await sql`SELECT id FROM products WHERE id = ${id} AND merchant_id = ${auth.merchantId}`
     if (!row) return reply.status(404).send({ error: 'Producto no encontrado' })
 
-    const { name, price, category, active, sort_order } = body.data
+    const { name, price, category, active, sort_order, variants, addons } = body.data
     await sql`
       UPDATE products SET
         name       = COALESCE(${name ?? null}, name),
         price      = COALESCE(${price ?? null}, price),
         category   = COALESCE(${category ?? null}, category),
         active     = COALESCE(${active ?? null}, active),
-        sort_order = COALESCE(${sort_order ?? null}, sort_order)
+        sort_order = COALESCE(${sort_order ?? null}, sort_order),
+        variants   = COALESCE(${variants != null ? sql.json(variants as any) : null}, variants),
+        addons     = COALESCE(${addons != null ? sql.json(addons as any) : null}, addons)
       WHERE id = ${id}
     `
     return { ok: true }
@@ -101,8 +109,10 @@ export async function productRoutes(app: FastifyInstance) {
     `
     if (!merchant) return reply.status(404).send({ error: 'Comercio no encontrado' })
 
-    const products = await sql<{ id: string; name: string; price: string; category: string | null }[]>`
-      SELECT id, name, price, category
+    const products = await sql<{
+      id: string; name: string; price: string; category: string | null; variants: unknown; addons: unknown
+    }[]>`
+      SELECT id, name, price, category, variants, addons
       FROM products
       WHERE merchant_id = ${merchant.id} AND active = true
       ORDER BY sort_order ASC, name ASC
