@@ -66,7 +66,7 @@ export async function ticketRoutes(app: FastifyInstance) {
       ) VALUES (
         ${merchant_id},
         ${tile_id ?? null},
-        ${raw_payload ? sql.json(raw_payload) : null},
+        ${raw_payload ? sql.json(raw_payload as import('postgres').JSONValue) : null},
         ${sql.json(items)},
         ${subtotal ?? null},
         ${tax ?? null},

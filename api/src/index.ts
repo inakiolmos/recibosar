@@ -3,6 +3,8 @@ import Fastify from 'fastify'
 import cors from '@fastify/cors'
 import { ticketRoutes } from './routes/tickets'
 import { merchantRoutes } from './routes/merchants'
+import { authRoutes } from './routes/auth'
+import { dashboardRoutes } from './routes/dashboard'
 
 const app = Fastify({ logger: true })
 
@@ -12,6 +14,8 @@ app.register(cors, {
 
 app.register(ticketRoutes, { prefix: '/api' })
 app.register(merchantRoutes, { prefix: '/api' })
+app.register(authRoutes, { prefix: '/api' })
+app.register(dashboardRoutes, { prefix: '/api' })
 
 app.get('/health', async () => ({ status: 'ok' }))
 
