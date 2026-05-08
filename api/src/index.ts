@@ -5,6 +5,8 @@ import { ticketRoutes } from './routes/tickets'
 import { merchantRoutes } from './routes/merchants'
 import { authRoutes } from './routes/auth'
 import { dashboardRoutes } from './routes/dashboard'
+import { productRoutes } from './routes/products'
+import { salesRoutes } from './routes/sales'
 
 const app = Fastify({ logger: true })
 
@@ -16,6 +18,8 @@ app.register(ticketRoutes, { prefix: '/api' })
 app.register(merchantRoutes, { prefix: '/api' })
 app.register(authRoutes, { prefix: '/api' })
 app.register(dashboardRoutes, { prefix: '/api' })
+app.register(productRoutes, { prefix: '/api' })
+app.register(salesRoutes, { prefix: '/api' })
 
 app.get('/health', async () => ({ status: 'ok' }))
 
