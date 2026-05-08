@@ -131,7 +131,7 @@ export default function ProductsPage() {
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="Café con leche"
-                  className="w-full border border-gray-200 rounded-2xl px-4 py-3 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-200"
+                  className="w-full border border-gray-200 rounded-2xl px-4 py-3 text-sm text-gray-900 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-200"
                 />
               </div>
               <div>
@@ -141,7 +141,7 @@ export default function ProductsPage() {
                   value={price}
                   onChange={(e) => setPrice(e.target.value)}
                   placeholder="1200"
-                  className="w-full border border-gray-200 rounded-2xl px-4 py-3 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-200"
+                  className="w-full border border-gray-200 rounded-2xl px-4 py-3 text-sm text-gray-900 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-200"
                 />
               </div>
               <div>
@@ -152,7 +152,7 @@ export default function ProductsPage() {
                   value={category}
                   onChange={(e) => setCategory(e.target.value)}
                   placeholder="Bebidas calientes"
-                  className="w-full border border-gray-200 rounded-2xl px-4 py-3 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-200"
+                  className="w-full border border-gray-200 rounded-2xl px-4 py-3 text-sm text-gray-900 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-200"
                 />
               </div>
             </div>
